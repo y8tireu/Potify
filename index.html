@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potify</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Container */
+        .container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #1DB954;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        /* Folder Input */
+        #folderInput {
+            margin-bottom: 30px;
+            padding: 12px 20px;
+            background-color: #1DB954;
+            border: none;
+            color: #FFFFFF;
+            cursor: pointer;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #folderInput:hover {
+            background-color: #17a44c;
+        }
+
+        /* Media Grid */
+        #mediaList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .media-item {
+            background-color: #282828;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .media-item:hover {
+            transform: translateY(-5px);
+            background-color: #3E3E3E;
+        }
+
+        .media-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+            color: #1DB954;
+        }
+
+        .media-name {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .media-type {
+            font-size: 12px;
+            color: #B3B3B3;
+        }
+
+        /* Player Controls */
+        .player-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #181818;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .player-controls button {
+            background: none;
+            border: none;
+            color: #FFFFFF;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .player-controls button:hover {
+            color: #1DB954;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .player-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        .player-info .track-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .player-info .track-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .player-info .track-type {
+            font-size: 12px;
+            color: #B3B3B3;
+        }
+
+        /* Hide Default File Input */
+        #folderInput {
+            opacity: 0;
+            position: absolute;
+            z-index: -1;
+        }
+
+        /* Custom File Input Label */
+        .custom-file-input {
+            position: relative;
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #1DB954;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .custom-file-input:hover {
+            background-color: #17a44c;
+        }
+
+        .custom-file-input::after {
+            content: 'Choose Folder';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .player-info .track-name {
+                font-size: 12px;
+            }
+
+            .player-info .track-type {
+                font-size: 10px;
+            }
+
+            .player-controls button {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Potify</h1>
+            <label class="custom-file-input" for="folderInput"></label>
+            <input type="file" id="folderInput" webkitdirectory multiple accept=".mp3,.mp4,.m4a">
+        </div>
+
+        <!-- Media Grid -->
+        <div id="mediaList">
+            <!-- Media items will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Player Controls -->
+    <div class="player-controls">
+        <button id="prevBtn" title="Previous"><i class="fas fa-backward"></i>⏮️</button>
+        <button id="playPauseBtn" title="Play/Pause"><i class="fas fa-play"></i>▶️</button>
+        <button id="nextBtn" title="Next"><i class="fas fa-forward"></i>⏭️</button>
+        <div class="player-info" id="playerInfo">
+            <img src="" alt="Album Art" id="albumArt" style="display: none;">
+            <div class="track-details">
+                <span class="track-name" id="trackName">No Track Playing</span>
+                <span class="track-type" id="trackType"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Audio Player -->
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <!-- Font Awesome for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+    <script>
+        // JavaScript Functionality
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const folderInput = document.getElementById('folderInput');
+            const mediaList = document.getElementById('mediaList');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const trackName = document.getElementById('trackName');
+            const trackType = document.getElementById('trackType');
+            const albumArt = document.getElementById('albumArt');
+            const playerInfo = document.getElementById('playerInfo');
+
+            let supportedFormats = ['mp3', 'mp4', 'm4a'];
+            let mediaFiles = [];
+            let currentTrackIndex = -1;
+            let isPlaying = false;
+
+            folderInput.addEventListener('change', (event) => {
+                const files = event.target.files;
+                mediaList.innerHTML = '';
+                mediaFiles = [];
+                currentTrackIndex = -1;
+                updatePlayerInfo();
+
+                if (files.length === 0) {
+                    mediaList.innerHTML = '<p>No files selected.</p>';
+                    return;
+                }
+
+                Array.from(files).forEach(file => {
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+                    if (supportedFormats.includes(fileExtension)) {
+                        mediaFiles.push(file);
+                        const mediaItem = document.createElement('div');
+                        mediaItem.classList.add('media-item');
+
+                        // Media Icon
+                        const mediaIcon = document.createElement('div');
+                        mediaIcon.classList.add('media-icon');
+                        if (fileExtension === 'mp4') {
+                            mediaIcon.innerHTML = '🎵'; // You can use more specific icons
+                        } else {
+                            mediaIcon.innerHTML = '🎶';
+                        }
+
+                        // Media Name
+                        const mediaName = document.createElement('div');
+                        mediaName.classList.add('media-name');
+                        mediaName.textContent = file.name;
+
+                        // Media Type
+                        const mediaType = document.createElement('div');
+                        mediaType.classList.add('media-type');
+                        mediaType.textContent = fileExtension.toUpperCase();
+
+                        // Assemble Media Item
+                        mediaItem.appendChild(mediaIcon);
+                        mediaItem.appendChild(mediaName);
+                        mediaItem.appendChild(mediaType);
+
+                        // Click Event to Play
+                        mediaItem.addEventListener('click', () => {
+                            const index = mediaFiles.indexOf(file);
+                            playTrack(index);
+                        });
+
+                        mediaList.appendChild(mediaItem);
+                    }
+                });
+
+                if (mediaFiles.length === 0) {
+                    mediaList.innerHTML = '<p>No supported media files found in the selected folder.</p>';
+                }
+            });
+
+            // Play a track by index
+            function playTrack(index) {
+                if (index < 0 || index >= mediaFiles.length) return;
+
+                const file = mediaFiles[index];
+                const fileURL = URL.createObjectURL(file);
+                audioPlayer.src = fileURL;
+                audioPlayer.play();
+                isPlaying = true;
+                updatePlayPauseButton();
+                currentTrackIndex = index;
+                updatePlayerInfo();
+            }
+
+            // Update Player Information
+            function updatePlayerInfo() {
+                if (currentTrackIndex >= 0 && currentTrackIndex < mediaFiles.length) {
+                    const currentFile = mediaFiles[currentTrackIndex];
+                    trackName.textContent = currentFile.name;
+                    trackType.textContent = currentFile.type || currentFile.name.split('.').pop().toUpperCase();
+
+                    // Optionally, set album art if available (requires additional implementation)
+                    // For now, we'll use a placeholder or hide the image
+                    albumArt.style.display = 'none';
+                } else {
+                    trackName.textContent = 'No Track Playing';
+                    trackType.textContent = '';
+                    albumArt.style.display = 'none';
+                }
+            }
+
+            // Play/Pause Button Functionality
+            playPauseBtn.addEventListener('click', () => {
+                if (currentTrackIndex === -1 && mediaFiles.length > 0) {
+                    playTrack(0);
+                } else if (isPlaying) {
+                    audioPlayer.pause();
+                    isPlaying = false;
+                } else {
+                    audioPlayer.play();
+                    isPlaying = true;
+                }
+                updatePlayPauseButton();
+            });
+
+            // Previous Button Functionality
+            prevBtn.addEventListener('click', () => {
+                if (currentTrackIndex > 0) {
+                    playTrack(currentTrackIndex - 1);
+                }
+            });
+
+            // Next Button Functionality
+            nextBtn.addEventListener('click', () => {
+                if (currentTrackIndex < mediaFiles.length - 1) {
+                    playTrack(currentTrackIndex + 1);
+                }
+            });
+
+            // Update Play/Pause Button Icon
+            function updatePlayPauseButton() {
+                if (isPlaying) {
+                    playPauseBtn.innerHTML = '⏸️';
+                } else {
+                    playPauseBtn.innerHTML = '▶️';
+                }
+            }
+
+            // When a track ends, play the next one
+            audioPlayer.addEventListener('ended', () => {
+                if (currentTrackIndex < mediaFiles.length - 1) {
+                    playTrack(currentTrackIndex + 1);
+                } else {
+                    // Stop if it's the last track
+                    isPlaying = false;
+                    updatePlayPauseButton();
+                }
+            });
+
+            // Update play state when user plays/pauses via audio controls
+            audioPlayer.addEventListener('play', () => {
+                isPlaying = true;
+                updatePlayPauseButton();
+            });
+
+            audioPlayer.addEventListener('pause', () => {
+                isPlaying = false;
+                updatePlayPauseButton();
+            });
+        });
+    </script>
+</body>
+</html>
+
